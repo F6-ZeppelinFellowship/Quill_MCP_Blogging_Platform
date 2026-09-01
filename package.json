@@ -1,0 +1,45 @@
+{
+  "name": "quill_mcp_blogging_platform",
+  "version": "1.0.0",
+  "description": "F6 Zeppelin Fellowship Capstone Project — MCP-Native Blogging Platform",
+  "main": "dist/app.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "tsx watch src/app.ts",
+    "db:migrate": "tsx src/db/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+[https://github.com/F6-ZeppelinFellowship/Quill_MCP_Blogging_Platform.git](https://github.com/F6-ZeppelinFellowship/Quill_MCP_Blogging_Platform.git)"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "blogging",
+    "typescript",
+    "sqlite"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "[https://github.com/F6-ZeppelinFellowship/Quill_MCP_Blogging_Platform/issues](https://github.com/F6-ZeppelinFellowship/Quill_MCP_Blogging_Platform/issues)"
+  },
+  "homepage": "[https://github.com/F6-ZeppelinFellowship/Quill_MCP_Blogging_Platform#readme](https://github.com/F6-ZeppelinFellowship/Quill_MCP_Blogging_Platform#readme)",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/cookie-parser": "^1.4.7",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.4"
+  }
+}
