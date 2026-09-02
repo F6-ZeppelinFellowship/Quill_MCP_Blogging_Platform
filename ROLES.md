@@ -54,11 +54,13 @@ Required functions to export:
 ### Member 1: MCP Server Core & Tool Surface
 **Focus:** Native MCP protocol integration, tool schema validation, and IDE agent interaction mechanics.
 
+* **Prerequisites Needed to Start:**
+  * Must wait for Member 3 to commit `src/types/index.ts` and stub out `post.service.ts` (Contract A) to execute full end-to-end tool integration tests.
+  * Can build tool schemas, Zod validation, and MCP server setup locally in parallel using mock return values.
 * **Primary Deliverables:**
   * `src/mcp/server.ts`: Streamable HTTP MCP server setup using `@modelcontextprotocol/sdk`. Extract API keys from request parameters (`/mcp?key=...`) and enforce `user_id` scoping.
   * `src/mcp/tools/posts.ts`: Zod schema definitions and execution logic for content operations (`create_post`, `update_post`, `delete_post`, `list_posts`, `get_post`).
   * `src/mcp/tools/lifecycle.ts`: Publishing workflow tools (`publish_post`, `schedule_post`, `unpublish_post`) featuring a `"requires_confirmation"` state payload to prevent runaway agent execution.
-
 * **Assigned Directories:** `src/mcp/`
 
 ---
@@ -66,13 +68,15 @@ Required functions to export:
 ### Member 2: Server-Side LLM Workflows & Generation Engine
 **Focus:** Prompt engineering, OpenRouter/Anthropic SDK integration, automated SEO pipelines, and performance analytics.
 
+* **Prerequisites Needed to Start:**
+  * Must wait for Member 3 to commit `src/types/index.ts` and stub out `getPost()` / `updatePost()` in `post.service.ts` (Contract A) so `manage_seo` can read content and save SEO tags.
+  * Must wait for Member 3's `getAnalyticsMetrics()` stub to process data in `get_analytics`.
 * **Primary Deliverables:**
   * `src/services/ai.service.ts`: Centralized LLM client handling model initialization, system prompts, temperature management, and structured response parsing.
   * `src/mcp/tools/seo.ts`: Implementation of the `manage_seo` tool handler utilizing LLM calls to extract `meta_title`, `meta_description`, and `slug`.
   * Contextual Drafting Pipeline: Logic that transforms raw user inputs (git diffs, release notes, raw outlines) into structured Markdown drafts.
   * `src/mcp/tools/analytics.ts`: Implementation of the `get_analytics` tool handler using LLMs to convert pageview metrics into actionable insights.
   * `src/mcp/tools/seo.ts` Execution Flow: Member 2's tool handler receives a `post_id`, calls `postService.getPost(id)`, sends `post.content` to `aiService.generateSeoTags()`, and then persists the result using `postService.updatePost()`.
-
 * **Assigned Directories:** `src/mcp/tools/seo.ts`, `src/mcp/tools/analytics.ts`, `src/services/ai.service.ts`
 
 ---
@@ -80,6 +84,8 @@ Required functions to export:
 ### Member 3: AI Auditability, Vector Search & Dual-Auth Platform
 **Focus:** Data layer implementation, vector embeddings, tool auditing, web session security, and dashboard rendering.
 
+* **Prerequisites Needed to Start:**
+  * **Day 1 Blocker Task (MUST COMPLETE FIRST):** Commit `src/types/index.ts` and export stubbed functions for `src/services/post.service.ts` (Contract A). Members 1 and 2 are blocked until these interface signatures are in Git.
 * **Primary Deliverables:**
   * `src/db/`: Schema definitions and migration runner using `node:sqlite` (`users`, `api_keys`, `posts`, `audit_logs`).
   * `src/services/post.service.ts`: Core data access methods powering the backend.
@@ -103,7 +109,7 @@ Required functions to export:
 
 ## 5. Testing & Integration Guardrails
 
-1. **Shared Types First (`src/types/index.ts`):** Standard interfaces for `Post`, `User`, `McpToolRequest`, and `LLMResult` must be committed prior to module development.
+1. **Shared Types First (`src/types/index.ts`):** Standard interfaces for `Post`, `User`, `McpToolRequest`, and `LLMResult` must be committed by Member 3 prior to module development.
 2. **Module Unit Testing Requirements:**
    * **Member 1:** Test that all tool schemas strictly validate Zod types and emit valid MCP responses.
    * **Member 2:** Test that `ai.service.ts` correctly extracts structured SEO metadata from sample Markdown files.
