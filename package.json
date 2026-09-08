@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/app.js",
     "dev": "tsx watch src/app.ts",
-    "db:migrate": "tsx src/db/index.ts"
+    "db:migrate": "tsx src/db/index.ts",
+    "test": "tsx --test tests/**/*.test.ts"
   },
   "repository": {
     "type": "git",
@@ -28,6 +29,7 @@
   },
   "homepage": "[https://github.com/F6-ZeppelinFellowship/Quill_MCP_Blogging_Platform#readme](https://github.com/F6-ZeppelinFellowship/Quill_MCP_Blogging_Platform#readme)",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.61.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.6",
