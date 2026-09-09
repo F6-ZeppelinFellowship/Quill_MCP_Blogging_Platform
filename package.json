@@ -30,11 +30,12 @@
   "homepage": "[https://github.com/F6-ZeppelinFellowship/Quill_MCP_Blogging_Platform#readme](https://github.com/F6-ZeppelinFellowship/Quill_MCP_Blogging_Platform#readme)",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.61.0",
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
