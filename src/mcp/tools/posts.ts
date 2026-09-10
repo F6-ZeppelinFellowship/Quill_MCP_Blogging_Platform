@@ -1,10 +1,35 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
+import {
+  createPost,
+  getPost,
+  listPosts,
+  updatePost,
+  deletePost,
+} from "../../services/post.service.js";
+
 /**
  * Register all Content CRUD Tools to the MCP Server
+ *
+ * Member 3 integration:
+ * MCP tools use the existing post.service.ts implementation.
+ *
+ * Note:
+ * The current MCP server uses a mock user context:
+ * user_mock_123
+ *
+ * This allows the MCP tools to work with the existing
+ * post.service.ts without changing Member 1 or Member 2 files.
  */
 export function registerPostTools(server: McpServer): void {
+  /**
+   * MCP user context.
+   *
+   * This matches the current temporary user context
+   * used in src/mcp/server.ts.
+   */
+  const contextUserId = "2d76d06a-3d20-4388-890c-ad74d4344465";
 
   /**
    * 1. create_post
@@ -19,31 +44,52 @@ export function registerPostTools(server: McpServer): void {
       tags: z.array(z.string()).optional().default([]),
     },
     async ({ title, content, tags }) => {
-      // TODO (Member 3 Integration): Replace with await postService.createPost(...)
-      const mockCreatedPost = {
-        id: `post_${Date.now()}`,
-        title,
-        content,
-        tags,
-        status: "draft" as const,
-        createdAt: new Date().toISOString(),
-      };
+      try {
+        const post = await createPost({
+          user_id: contextUserId,
+          title,
+          content,
+          tags,
+        });
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                message: "Post created successfully.",
-                post: mockCreatedPost,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  message: "Post created successfully.",
+                  post,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("[MCP create_post] Error:", error);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  error: "Failed to create post.",
+                  details:
+                    error instanceof Error
+                      ? error.message
+                      : String(error),
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -58,24 +104,66 @@ export function registerPostTools(server: McpServer): void {
       id: z.string().min(1, "Post ID is required"),
     },
     async ({ id }) => {
-      // TODO (Member 3 Integration): Replace with await postService.getPost(id)
-      const mockPost = {
-        id,
-        title: "Sample Blog Post Title",
-        content: "# Sample Blog Post\n\nThis is a placeholder post body.",
-        tags: ["engineering", "mcp"],
-        status: "draft" as const,
-        createdAt: new Date().toISOString(),
-      };
+      try {
+        const post = await getPost(id);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({ post: mockPost }, null, 2),
-          },
-        ],
-      };
+        if (!post) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    error: "Post not found.",
+                    id,
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  post,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("[MCP get_post] Error:", error);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  error: "Failed to retrieve post.",
+                  id,
+                  details:
+                    error instanceof Error
+                      ? error.message
+                      : String(error),
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -87,42 +175,60 @@ export function registerPostTools(server: McpServer): void {
     "list_posts",
     "List existing blog posts with optional filters for status (draft, published, scheduled) and result limit.",
     {
-      status: z.enum(["draft", "published", "scheduled"]).optional(),
+      status: z
+        .enum(["draft", "published", "scheduled"])
+        .optional(),
       limit: z.number().int().positive().optional().default(10),
     },
     async ({ status, limit }) => {
-      // TODO (Member 3 Integration): Replace with await postService.listPosts({ status, limit })
-      const mockPosts = [
-        {
-          id: "post_101",
-          title: "Getting Started with MCP Architecture",
-          status: status || "draft",
-          tags: ["mcp", "express"],
-        },
-        {
-          id: "post_102",
-          title: "Building Modern Developer Platforms",
-          status: status || "published",
-          tags: ["architecture"],
-        },
-      ].slice(0, limit);
+      try {
+        const posts = await listPosts({
+          status,
+          limit,
+        });
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                count: mockPosts.length,
-                filterApplied: { status, limit },
-                posts: mockPosts,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  count: posts.length,
+                  filterApplied: {
+                    status,
+                    limit,
+                  },
+                  posts,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("[MCP list_posts] Error:", error);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  error: "Failed to list posts.",
+                  details:
+                    error instanceof Error
+                      ? error.message
+                      : String(error),
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -140,30 +246,71 @@ export function registerPostTools(server: McpServer): void {
       tags: z.array(z.string()).optional(),
     },
     async ({ id, title, content, tags }) => {
-      // TODO (Member 3 Integration): Replace with await postService.updatePost(id, { title, content, tags })
-      const mockUpdatedPost = {
-        id,
-        title: title || "Updated Blog Post Title",
-        content: content || "Updated post content.",
-        tags: tags || ["updated"],
-        updatedAt: new Date().toISOString(),
-      };
+      try {
+        const post = await updatePost(id, {
+          title,
+          content,
+          tags,
+        });
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
+        if (!post) {
+          return {
+            content: [
               {
-                message: "Post updated successfully.",
-                post: mockUpdatedPost,
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    error: "Post not found.",
+                    id,
+                  },
+                  null,
+                  2
+                ),
               },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+            ],
+            isError: true,
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  message: "Post updated successfully.",
+                  post,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("[MCP update_post] Error:", error);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  error: "Failed to update post.",
+                  id,
+                  details:
+                    error instanceof Error
+                      ? error.message
+                      : String(error),
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -178,22 +325,67 @@ export function registerPostTools(server: McpServer): void {
       id: z.string().min(1, "Post ID is required"),
     },
     async ({ id }) => {
-      // TODO (Member 3 Integration): Replace with await postService.deletePost(id)
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
+      try {
+        const deleted = await deletePost(id);
+
+        if (!deleted) {
+          return {
+            content: [
               {
-                message: `Post ${id} deleted successfully.`,
-                deletedId: id,
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    error: "Post not found.",
+                    id,
+                  },
+                  null,
+                  2
+                ),
               },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+            ],
+            isError: true,
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  message: `Post ${id} deleted successfully.`,
+                  deletedId: id,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("[MCP delete_post] Error:", error);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  error: "Failed to delete post.",
+                  id,
+                  details:
+                    error instanceof Error
+                      ? error.message
+                      : String(error),
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
     }
   );
 }
