@@ -1,18 +1,37 @@
+import dotenv from "dotenv";
 import express from "express";
-import { config } from "./config/env.js";
-import { handleMcpSse, handleMcpMessage } from "./mcp/server.js";
-import { publicRouter } from "./public-site/routes.js";
+
+dotenv.config();
 
 const app = express();
+const port = Number(process.env.PORT ?? 3000);
+
 app.use(express.json());
 
-// Public API Routes
-app.use("/api", publicRouter);
+app.get("/", (_req, res) => {
+  res.json({
+    name: "Quill MCP Blogging Platform",
+    status: "running",
+    message: "The backend is up. Add the rest of the MCP and dashboard features as needed.",
+  });
+});
 
-// MCP Routes
-app.get("/mcp/sse", handleMcpSse);
-app.post("/mcp/messages", handleMcpMessage);
+app.get("/health", (_req, res) => {
+  res.json({ ok: true, port });
+});
 
-app.listen(config.port, () => {
-  console.log(`Server running on http://localhost:${config.port}`);
+app.get("/mcp", (_req, res) => {
+  res.status(501).json({
+    error: "MCP transport is not fully wired in this workspace yet.",
+  });
+});
+
+app.post("/mcp/messages", (_req, res) => {
+  res.status(501).json({
+    error: "MCP message handling is not fully wired in this workspace yet.",
+  });
+});
+
+app.listen(port, () => {
+  console.log(`Quill server listening on http://localhost:${port}`);
 });
