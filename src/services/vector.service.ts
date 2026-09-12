@@ -18,29 +18,27 @@ export interface VectorConfig {
 }
 
 function getVectorConfig(): VectorConfig {
-    return {
-        qdrantUrl: process.env.QDRANT_URL,
-        collectionName:
-            process.env.QDRANT_COLLECTION ?? "quill_posts",
-        embeddingModel: process.env.EMBEDDING_MODEL,
-    };
+  return {
+    qdrantUrl: process.env.QDRANT_URL,
+    collectionName: process.env.QDRANT_COLLECTION ?? "quill_posts",
+    embeddingModel: process.env.EMBEDDING_MODEL,
+  };
 }
 
 /**
  * Prepare the text that should be embedded for a post.
  */
 export function getPostEmbeddingText(post: Post): string {
-    const tags = post.tags.length > 0
-        ? `Tags: ${post.tags.join(", ")}`
-        : "";
+  const tagsList = post.tags ?? [];
+  const tags = tagsList.length > 0 ? `Tags: ${tagsList.join(", ")}` : "";
 
-    return [
-        `Title: ${post.title}`,
-        tags,
-        `Content: ${post.content}`,
-    ]
-        .filter(Boolean)
-        .join("\n\n");
+  return [
+    `Title: ${post.title ?? ""}`,
+    tags,
+    `Content: ${post.content}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 /**
@@ -52,38 +50,20 @@ export function getPostEmbeddingText(post: Post): string {
  * - Upsert the vector using post.id as the point ID.
  * - Store post metadata such as user_id, title, slug and status.
  */
-export async function embedAndUpsertPost(
-    post: Post,
-): Promise<void> {
-    if (post.status !== "published") {
-        return;
-    }
+export async function embedAndUpsertPost(post: Post): Promise<void> {
+  if (post.status !== "published") {
+    return;
+  }
 
-    const config = getVectorConfig();
-    const text = getPostEmbeddingText(post);
+  const config = getVectorConfig();
+  const text = getPostEmbeddingText(post);
 
-    console.log(
-        `[vector] Preparing post ${post.id} for vector upsert.`,
-    );
-
-    console.log(
-        `[vector] Collection: ${config.collectionName}`,
-    );
-
-    console.log(
-        `[vector] Embedding model: ${
-            config.embeddingModel ?? "not configured"
-        }`,
-    );
-
-    console.log(
-        `[vector] Text length: ${text.length} characters`,
-    );
-
-    /*
-     * Qdrant integration will be added here after the team
-     * confirms the embedding provider and vector dimensions.
-     */
+  console.log(`[vector] Preparing post ${post.id} for vector upsert.`);
+  console.log(`[vector] Collection: ${config.collectionName}`);
+  console.log(
+    `[vector] Embedding model: ${config.embeddingModel ?? "not configured"}`
+  );
+  console.log(`[vector] Text length: ${text.length} characters`);
 }
 
 /**
