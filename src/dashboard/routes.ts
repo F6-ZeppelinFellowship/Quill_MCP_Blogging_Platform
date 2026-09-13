@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { readFile } from "node:fs/promises";
-import path from "node:path";
+import path, { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { listPosts, getAnalyticsMetrics } from "../services/post.service.js";
 import { db } from "../db/index.js";
@@ -9,12 +9,28 @@ const router = Router();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const viewsDir = path.join(__dirname, "views");
+
+const sourceLayoutPath = resolve(
+    process.cwd(),
+    "src",
+    "dashboard",
+    "views",
+    "layout.html",
+);
+
+const fallbackLayoutPath = resolve(
+    __dirname,
+    "..",
+    "src",
+    "dashboard",
+    "views",
+    "layout.html",
+);
 
 router.get("/", async (_req, res) => {
     try {
         const html = await readFile(
-            path.join(viewsDir, "layout.html"),
+            sourceLayoutPath,
             "utf8",
         );
 

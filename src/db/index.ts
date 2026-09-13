@@ -35,15 +35,28 @@ db.exec("PRAGMA foreign_keys = ON;");
  * Run the initial database migration.
  */
 function runMigrations(): void {
-    const migrationPath = resolve(
-        __dirname,
-        "migrations",
-        "001_initial_schema.sql",
+    const candidatePaths = [
+        resolve(
+            process.cwd(),
+            "src",
+            "db",
+            "migrations",
+            "001_initial_schema.sql",
+        ),
+        resolve(
+            __dirname,
+            "migrations",
+            "001_initial_schema.sql",
+        ),
+    ];
+
+    const migrationPath = candidatePaths.find((candidate) =>
+        existsSync(candidate),
     );
 
-    if (!existsSync(migrationPath)) {
+    if (!migrationPath) {
         throw new Error(
-            `Database migration not found: ${migrationPath}`,
+            `Database migration not found in expected locations: ${candidatePaths.join(", ")}`,
         );
     }
 

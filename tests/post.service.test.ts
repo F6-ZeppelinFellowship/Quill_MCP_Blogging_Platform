@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { db } from "../src/db/index.js";
 import {
     createPost,
     getPost,
@@ -10,6 +11,18 @@ import {
 
 test("post CRUD lifecycle", async () => {
     const userId = "2d76d06a-3d20-4388-890c-ad74d4344465";
+
+    db.prepare(`
+        INSERT OR IGNORE INTO users (
+            id,
+            email,
+            password_hash
+        ) VALUES (?, ?, ?)
+    `).run(
+        userId,
+        "member3-test@example.com",
+        "test-password-hash",
+    );
 
     const post = await createPost({
         user_id: userId,
