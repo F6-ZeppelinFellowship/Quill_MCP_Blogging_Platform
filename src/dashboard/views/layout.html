@@ -1,25 +1,288 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quill Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quill Dashboard</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121a2b;
+      --panel-2: #1a2440;
+      --text: #edf2ff;
+      --muted: #a9b5d0;
+      --accent: #7dd3fc;
+      --accent-2: #c084fc;
+      --border: rgba(255,255,255,0.08);
+      --success: #4ade80;
+      --warning: #fbbf24;
+      --danger: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #0b1020 0%, #111827 100%);
+      color: var(--text);
+    }
+    a { color: var(--accent); text-decoration: none; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 30px 20px 60px; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 16px; border-bottom: 1px solid var(--border); padding-bottom: 18px;
+    }
+    .brand { font-size: 1.5rem; font-weight: 700; }
+    .nav { display: flex; gap: 16px; flex-wrap: wrap; }
+    .hero {
+      margin-top: 24px;
+      background: linear-gradient(135deg, rgba(125,211,252,0.12), rgba(192,132,252,0.12));
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+    }
+    .hero h1 { margin: 0 0 10px; font-size: clamp(1.8rem, 4vw, 3rem); }
+    .hero p { margin: 0; color: var(--muted); line-height: 1.6; }
+    .stats {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 18px; margin-top: 24px;
+    }
+    .card {
+      background: rgba(18, 26, 43, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+    }
+    .card h3 { margin: 0 0 8px; font-size: 0.9rem; color: var(--muted); }
+    .card .value {
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      font-weight: 700;
+      margin: 0;
+    }
+    .grid {
+      display: grid; grid-template-columns: 1.3fr 1fr;
+      gap: 24px;
+      margin-top: 24px;
+    }
+    .panel {
+      background: rgba(18, 26, 43, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+    }
+    .panel h2 { margin-top: 0; }
+    ul { padding-left: 18px; color: var(--muted); }
+    button, input {
+      font: inherit;
+    }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #06111d;
+      font-weight: 700;
+    }
+    input {
+      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03); color: var(--text);
+    }
+    .row { display: flex; gap: 10px; align-items: center; }
+    .muted { color: var(--muted); }
+    .list { list-style: none; padding: 0; margin: 0; }
+    .list li {
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .list li:last-child { border-bottom: none; }
+    .pill {
+      display: inline-block; padding: 4px 8px; border-radius: 999px;
+      background: rgba(74,222,128,0.14); border: 1px solid rgba(74,222,128,0.35);
+      color: var(--success); font-size: 0.8rem; margin-left: 8px;
+    }
+    .danger { color: var(--danger); }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
 </head>
 <body>
-    <h1>Quill Dashboard</h1>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">Quill Dashboard</div>
+      <nav class="nav">
+        <a href="/dashboard">Overview</a>
+        <a href="/blog">Public blog</a>
+        <a href="/dashboard/login">Login</a>
+        <a href="/dashboard/signup">Signup</a>
+      </nav>
+    </div>
 
-    <p>Blogging platform administration dashboard.</p>
+    <section class="hero">
+      <h1>Manage your blog from your workspace.</h1>
+      <p>
+        Sign in to create API keys, review analytics, and use Quill through MCP tools or the browser dashboard.
+      </p>
+    </section>
 
-    <nav>
-        <a href="/dashboard">Dashboard</a> |
-        <a href="/dashboard/posts">Posts API</a> |
-        <a href="/dashboard/analytics">Analytics API</a> |
-        <a href="/dashboard/audit">Audit API</a>
-    </nav>
+    <div class="stats">
+      <div class="card">
+        <h3>Total views</h3>
+        <p class="value" id="totalViews">0</p>
+      </div>
+      <div class="card">
+        <h3>Posts</h3>
+        <p class="value" id="postCount">0</p>
+      </div>
+      <div class="card">
+        <h3>API keys</h3>
+        <p class="value" id="apiKeyCount">0</p>
+      </div>
+      <div class="card">
+        <h3>Audit log entries</h3>
+        <p class="value" id="auditCount">0</p>
+      </div>
+    </div>
 
-    <hr>
+    <div class="grid">
+      <div class="panel">
+        <h2>Account</h2>
+        <div id="accountInfo" class="muted">Loading account…</div>
+        <div style="margin-top:16px;">
+          <button id="createApiKey">Create API key</button>
+        </div>
+        <div id="apiKeyOutput" style="margin-top:16px;"></div>
+      </div>
 
-    <h2>Member 3 Dashboard</h2>
-    <p>Post management, analytics and audit monitoring are available through the dashboard endpoints.</p>
+      <div class="panel">
+        <h2>Quick links</h2>
+        <ul>
+          <li><a href="/dashboard/signup">Create a user account</a></li>
+          <li><a href="/dashboard/login">Log in</a></li>
+          <li><a href="/blog">Open public blog</a></li>
+          <li><a href="/dashboard/posts">View posts JSON</a></li>
+          <li><a href="/dashboard/analytics">View analytics JSON</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top: 24px;">
+      <div class="panel">
+        <h2>Recent posts</h2>
+        <ul id="postsList" class="list"></ul>
+      </div>
+
+      <div class="panel">
+        <h2>Referrer summary</h2>
+        <ul id="referrersList" class="list"></ul>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:24px;">
+      <h2>Recent audit logs</h2>
+      <ul id="auditList" class="list"></ul>
+    </div>
+  </div>
+
+  <script>
+    async function getJson(url, options = {}) {
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error(`Request failed: ${response.status}`);
+      }
+      return response.json();
+    }
+
+    function renderPosts(posts) {
+      const list = document.getElementById('postsList');
+      if (!posts.length) {
+        list.innerHTML = '<li class="muted">No posts yet.</li>';
+        return;
+      }
+
+      list.innerHTML = posts.slice(0, 6).map((post) => `
+        <li>
+          <strong>${post.title}</strong>
+          <span class="pill">${post.status}</span>
+          <div class="muted">${new Date(post.created_at).toLocaleDateString()}</div>
+        </li>
+      `).join('');
+    }
+
+    function renderReferrers(referrers) {
+      const list = document.getElementById('referrersList');
+      if (!referrers.length) {
+        list.innerHTML = '<li class="muted">No analytics data yet.</li>';
+        return;
+      }
+
+      list.innerHTML = referrers.map((item) => `
+        <li>
+          <strong>${item.referrer || 'direct'}</strong>
+          <div class="muted">${item.views} views</div>
+        </li>
+      `).join('');
+    }
+
+    function renderAudit(logs) {
+      const list = document.getElementById('auditList');
+      if (!logs.length) {
+        list.innerHTML = '<li class="muted">No audit logs yet.</li>';
+        return;
+      }
+
+      list.innerHTML = logs.slice(0, 6).map((log) => `
+        <li>
+          <strong>${log.tool_name}</strong>
+          <span class="pill">${log.status}</span>
+          <div class="muted">${new Date(log.created_at).toLocaleDateString()} · ${log.agent || 'unknown agent'}</div>
+        </li>
+      `).join('');
+    }
+
+    async function loadDashboard() {
+      try {
+        const [account, posts, analytics, audit] = await Promise.all([
+          getJson('/dashboard/account'),
+          getJson('/dashboard/posts'),
+          getJson('/dashboard/analytics'),
+          getJson('/dashboard/audit')
+        ]);
+
+        const accountInfo = document.getElementById('accountInfo');
+        if (account.user) {
+          accountInfo.innerHTML = `<strong>${account.user.email}</strong><br /><span class="muted">User ID: ${account.user.id}</span>`;
+        }
+
+        document.getElementById('apiKeyCount').textContent = String((account.apiKeys || []).length);
+        document.getElementById('postCount').textContent = String((posts.posts || []).length);
+        document.getElementById('totalViews').textContent = String(analytics.totalViews || 0);
+        document.getElementById('auditCount').textContent = String((audit.logs || []).length);
+
+        renderPosts(posts.posts || []);
+        renderReferrers(analytics.byReferrer || []);
+        renderAudit(audit.logs || []);
+      } catch (error) {
+        document.getElementById('accountInfo').innerHTML = '<span class="danger">Unable to load dashboard data.</span>';
+      }
+    }
+
+    document.getElementById('createApiKey').addEventListener('click', async () => {
+      const output = document.getElementById('apiKeyOutput');
+      try {
+        const result = await getJson('/dashboard/api-keys', { method: 'POST' });
+        output.innerHTML = `
+          <strong>New API key created</strong>
+          <div class="muted" style="margin-top:8px;">${result.apiKey}</div>
+        `;
+        loadDashboard();
+      } catch (error) {
+        output.innerHTML = '<span class="danger">Failed to create API key.</span>';
+      }
+    });
+
+    loadDashboard();
+  </script>
 </body>
 </html>

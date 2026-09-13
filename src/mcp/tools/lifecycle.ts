@@ -1,6 +1,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
+import {
+  getPost,
+  updatePostStatus,
+} from "../../services/post.service.js";
+
 /**
  * Register all Lifecycle & Workflow Tools to the MCP Server
  */
@@ -44,29 +49,66 @@ export function registerLifecycleTools(server: McpServer): void {
         };
       }
 
-      // TODO (Member 3 Integration): Replace with await postService.updatePostStatus(id, "published")
-      // Note: Member 3's service automatically triggers vector embedding (embedAndUpsertPost) on 'published'
-      const mockPublishedPost = {
-        id,
-        status: "published" as const,
-        publishedAt: new Date().toISOString(),
-      };
+      try {
+        const existing = await getPost(id);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
+        if (!existing) {
+          return {
+            content: [
               {
-                message: `Post ${id} has been published successfully.`,
-                post: mockPublishedPost,
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    error: "Post not found.",
+                    id,
+                  },
+                  null,
+                  2
+                ),
               },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+            ],
+            isError: true,
+          };
+        }
+
+        const post = await updatePostStatus(id, "published");
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  message: `Post ${id} has been published successfully.`,
+                  post,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("[MCP publish_post] Error:", error);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  error: "Failed to publish post.",
+                  id,
+                  details: error instanceof Error ? error.message : String(error),
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -103,28 +145,66 @@ export function registerLifecycleTools(server: McpServer): void {
         };
       }
 
-      // TODO (Member 3 Integration): Replace with await postService.updatePostStatus(id, "scheduled", scheduledTime)
-      const mockScheduledPost = {
-        id,
-        status: "scheduled" as const,
-        publishAt: scheduledTime.toISOString(),
-      };
+      try {
+        const existing = await getPost(id);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
+        if (!existing) {
+          return {
+            content: [
               {
-                message: `Post ${id} scheduled for release at ${scheduledTime.toISOString()}.`,
-                post: mockScheduledPost,
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    error: "Post not found.",
+                    id,
+                  },
+                  null,
+                  2
+                ),
               },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+            ],
+            isError: true,
+          };
+        }
+
+        const post = await updatePostStatus(id, "scheduled", scheduledTime);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  message: `Post ${id} scheduled for release at ${scheduledTime.toISOString()}.`,
+                  post,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("[MCP schedule_post] Error:", error);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  error: "Failed to schedule post.",
+                  id,
+                  details: error instanceof Error ? error.message : String(error),
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
     }
   );
 
@@ -139,28 +219,66 @@ export function registerLifecycleTools(server: McpServer): void {
       id: z.string().min(1, "Post ID is required"),
     },
     async ({ id }) => {
-      // TODO (Member 3 Integration): Replace with await postService.updatePostStatus(id, "draft")
-      const mockUnpublishedPost = {
-        id,
-        status: "draft" as const,
-        updatedAt: new Date().toISOString(),
-      };
+      try {
+        const existing = await getPost(id);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
+        if (!existing) {
+          return {
+            content: [
               {
-                message: `Post ${id} has been unpublished and reverted to draft status.`,
-                post: mockUnpublishedPost,
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    error: "Post not found.",
+                    id,
+                  },
+                  null,
+                  2
+                ),
               },
-              null,
-              2
-            ),
-          },
-        ],
-      };
+            ],
+            isError: true,
+          };
+        }
+
+        const post = await updatePostStatus(id, "draft");
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  message: `Post ${id} has been unpublished and reverted to draft status.`,
+                  post,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        console.error("[MCP unpublish_post] Error:", error);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  error: "Failed to unpublish post.",
+                  id,
+                  details: error instanceof Error ? error.message : String(error),
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
     }
   );
 }

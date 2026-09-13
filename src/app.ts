@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import express from "express";
+import cookieParser from "cookie-parser";
 import { config } from "./config/env.js";
 import { handleMcpSse, handleMcpMessage } from "./mcp/server.js";
 import { publicRouter } from "./public-site/routes.js";
@@ -10,6 +11,8 @@ const app = express();
 const port = Number(process.env.PORT ?? 3000);
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.get("/", (_req, res) => {
   res.json({
@@ -23,11 +26,10 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true, port });
 });
 
-app.get("/mcp", (_req, res) => {
-  res.status(501).json({
-    error: "MCP transport is not fully wired in this workspace yet.",
-  });
-});
+app.get("/mcp", handleMcpSse);
+
+// Public blog and read-only routes
+app.use(publicRouter);
 
 // Dashboard
 app.use("/dashboard", dashboardRouter);
