@@ -1,7 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type { RawAnalyticsData } from "../types/index.js";
 
-const DEFAULT_MODEL = "claude-sonnet-4-20250514";
+const DEFAULT_MODEL = "gemini-2.0-flash";
 const DEFAULT_TEMPERATURE = 0.2;
 const MAX_TOKENS = 4096;
 
@@ -12,21 +11,32 @@ const SEO_SYSTEM_PROMPT =
 const ANALYTICS_SYSTEM_PROMPT =
   "You are Quill's analytics advisor. Interpret the supplied analytics object and return concise, actionable insights. Mention meaningful trends or limitations, and do not invent metrics.";
 
-let client: Anthropic | undefined;
+function getApiKey(): string {
+  const apiKey =
+    process.env.GOOGLE_API_KEY ?? process.env.GEMINI_API_KEY ?? process.env.ANTHROPIC_API_KEY;
 
-function getClient(): Anthropic {
-  if (!client) {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error("ANTHROPIC_API_KEY is required for LLM workflows");
-    }
-    client = new Anthropic({ apiKey });
+  if (!apiKey) {
+    throw new Error(
+      "GOOGLE_API_KEY or GEMINI_API_KEY is required for LLM workflows. Add your Google AI Studio key to the environment.",
+    );
   }
-  return client;
+
+  return apiKey;
+}
+
+function getModel(): string {
+  return (
+    process.env.GOOGLE_MODEL ??
+    process.env.GEMINI_MODEL ??
+    process.env.ANTHROPIC_MODEL ??
+    DEFAULT_MODEL
+  );
 }
 
 function getTemperature(): number {
-  const configured = Number(process.env.ANTHROPIC_TEMPERATURE);
+  const configured = Number(
+    process.env.ANTHROPIC_TEMPERATURE ?? process.env.GOOGLE_TEMPERATURE,
+  );
   return Number.isFinite(configured) && configured >= 0 && configured <= 1
     ? configured
     : DEFAULT_TEMPERATURE;
@@ -61,19 +71,74 @@ function requireString(value: unknown, field: string): string {
   return value.trim();
 }
 
-async function requestText(system: string, input: string): Promise<string> {
-  const response = await getClient().messages.create({
-    model: process.env.ANTHROPIC_MODEL ?? DEFAULT_MODEL,
-    max_tokens: MAX_TOKENS,
-    temperature: getTemperature(),
-    system,
-    messages: [{ role: "user", content: input }],
-  });
-  const text = response.content.find((block) => block.type === "text");
-  if (!text || text.type !== "text") {
-    throw new Error("LLM returned no text content");
+function normalizeApiKeyError(error: unknown): Error {
+  const message = error instanceof Error ? error.message : String(error);
+
+  if (
+    /api[-_ ]key|authentication|unauthorized|invalid key|401|403|UNAUTHENTICATED/i.test(
+      message,
+    )
+  ) {
+    return new Error(
+      "GOOGLE_API_KEY or GEMINI_API_KEY is invalid or expired. Please verify the environment variable and credentials.",
+    );
   }
-  return text.text;
+
+  return new Error(`LLM request failed: ${message}`);
+}
+
+async function requestText(system: string, input: string): Promise<string> {
+  try {
+    const apiKey = getApiKey();
+    const model = getModel();
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: `${system}\n\n${input}` }],
+            },
+          ],
+          generationConfig: {
+            temperature: getTemperature(),
+            maxOutputTokens: MAX_TOKENS,
+          },
+        }),
+      },
+    );
+
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const message =
+        payload?.error?.message ??
+        payload?.message ??
+        `HTTP ${response.status}`;
+      throw normalizeApiKeyError(new Error(message));
+    }
+
+    const text = payload?.candidates?.[0]?.content?.parts
+      ?.map((part: { text?: string }) => part.text ?? "")
+      .join("")
+      .trim();
+
+    if (!text) {
+      throw new Error("LLM returned no text content");
+    }
+
+    return text;
+  } catch (error) {
+    if (error instanceof Error && /GOOGLE_API_KEY|GEMINI_API_KEY|LLM request failed/i.test(error.message)) {
+      throw error;
+    }
+    throw normalizeApiKeyError(error);
+  }
 }
 
 export async function generateDraft(

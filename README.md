@@ -88,8 +88,8 @@ When connected to an IDE, Quill registers the following tools with your AI agent
 
 ```bash
 # Clone the repository
-git clone [https://github.com/your-username/quill.git](https://github.com/your-username/quill.git)
-cd quill
+git clone https://github.com/F6-ZeppelinFellowship/Quill_MCP_Blogging_Platform.git
+cd Quill_MCP_Blogging_Platform
 
 # Install dependencies
 npm install
