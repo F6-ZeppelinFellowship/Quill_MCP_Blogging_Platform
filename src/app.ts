@@ -1,7 +1,10 @@
 import dotenv from "dotenv";
 import express from "express";
-
-dotenv.config();
+import { config } from "./config/env.js";
+import { handleMcpSse, handleMcpMessage } from "./mcp/server.js";
+import { publicRouter } from "./public-site/routes.js";
+import { auditMiddleware } from "./middleware/audit.js";
+import { dashboardRouter } from "./dashboard/routes.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
@@ -26,11 +29,14 @@ app.get("/mcp", (_req, res) => {
   });
 });
 
-app.post("/mcp/messages", (_req, res) => {
-  res.status(501).json({
-    error: "MCP message handling is not fully wired in this workspace yet.",
-  });
-});
+// Dashboard
+app.use("/dashboard", dashboardRouter);
+
+// Audit MCP requests
+app.use("/mcp", auditMiddleware);
+// MCP Routes
+app.get("/mcp/sse", handleMcpSse);
+app.post("/mcp/messages", handleMcpMessage);
 
 app.listen(port, () => {
   console.log(`Quill server listening on http://localhost:${port}`);

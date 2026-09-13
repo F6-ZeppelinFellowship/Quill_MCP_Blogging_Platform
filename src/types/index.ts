@@ -1,21 +1,37 @@
+export type PostStatus = "draft" | "published" | "scheduled";
+
 export interface Post {
   id: string;
+  user_id: string;
+  title: string;
+  content: string;
+  tags: string[];
+  status: PostStatus;
+  slug?: string;
+  meta_title?: string;
+  meta_description?: string;
+  created_at: string;
+  updated_at: string;
+  publish_at?: string;
+}
+
+export interface NewPostInput {
+  user_id: string;
   title: string;
   content: string;
   tags?: string[];
-  status?: "draft" | "published" | "scheduled";
+  status?: PostStatus;
+  slug?: string;
   meta_title?: string;
   meta_description?: string;
-  slug?: string;
-  user_id?: string;
-  created_at?: string;
-  updated_at?: string;
+  publish_at?: Date | string;
 }
 
 export interface PostSummary {
   id: string;
   title: string;
   slug?: string;
+  status: PostStatus;
   score?: number;
 }
 
